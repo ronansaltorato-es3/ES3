@@ -139,9 +139,64 @@ input, select, textarea {
   text-transform: capitalize;
 }
 .tag-status.rascunho { background: #eee; color: #555; }
-.tag-status.enviado { background: #fff4cc; color: #8a6d00; }
-.tag-status.aprovado { background: #d9f7e5; color: var(--verde); }
-.tag-status.reprovado { background: #fbe0dd; color: var(--vermelho); }
+.tag-status.enviado, .tag-status.enviada { background: #fff4cc; color: #8a6d00; }
+.tag-status.aprovado, .tag-status.aprovada { background: #d9f7e5; color: var(--verde); }
+.tag-status.reprovado, .tag-status.reprovada { background: #fbe0dd; color: var(--vermelho); }
+
+.escopo-catalogo {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  padding: 8px 16px;
+  margin-bottom: 16px;
+}
+
+.escopo-categoria h4 {
+  color: var(--azul);
+  border-bottom: 1px solid var(--cinza-linha);
+  padding-bottom: 6px;
+  margin-top: 18px;
+}
+
+.escopo-item {
+  padding: 8px 0;
+  border-bottom: 1px dashed var(--cinza-linha);
+}
+.escopo-item:last-child { border-bottom: none; }
+
+.escopo-item-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+.escopo-item-check input[type="checkbox"] { width: 16px; height: 16px; }
+.escopo-item-custo { margin-left: auto; color: #666; font-size: 12px; }
+
+.escopo-item-descricao {
+  margin: 4px 0 6px 24px;
+  color: #666;
+  font-size: 13px;
+}
+
+.escopo-quantidade {
+  margin-left: 24px;
+  width: 220px;
+  max-width: 100%;
+}
+.escopo-quantidade:disabled { background: #f2f2f2; }
+
+#lista-catalogo h3 {
+  color: var(--azul);
+  margin-top: 24px;
+}
+
+code {
+  background: #eef0f5;
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-size: 12px;
+}
 
 @media (max-width: 700px) {
   .conteudo { padding: 0 10px 40px; }

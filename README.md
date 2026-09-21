@@ -1,14 +1,44 @@
-# ES3 — Sistema de Gestão de Obras
+# ES³ — Sistema de Gestão de Obras
 
-Este repositório é a base do seu sistema de gestão de obras. O primeiro módulo pronto é o de **Orçamento Automático**.
+Este repositório é a base do sistema de gestão de obras da ES³ Engenharia de Obras. O módulo pronto até
+agora é o de **Propostas e Orçamentos Automáticos**.
 
-## O que esse módulo faz
+## Módulos
 
-- Você cadastra seus **serviços** (ex: "Alvenaria de vedação", unidade m², preço R$ 85,50) uma única vez.
-- Você cadastra seus **clientes**.
-- Você monta um **orçamento** escolhendo cliente + itens (do catálogo ou digitados na hora). O sistema calcula subtotal, desconto e total automaticamente, na tela, enquanto você digita.
-- Ao salvar, o sistema gera e abre um **PDF profissional do orçamento** automaticamente, com o cabeçalho da sua empresa, dados do cliente, tabela de itens e totais.
-- Todos os orçamentos ficam salvos e podem ser reabertos, editados ou baixados novamente em PDF a qualquer momento.
+### 1. Propostas de Serviço (módulo principal)
+
+Reproduz digitalmente o modelo de proposta comercial da ES³ (escopo por etapas, investimento fechado,
+condições de pagamento parceladas, observações e diferenciais), mas com cálculo automático:
+
+- Você cadastra uma vez, no **Catálogo de Escopo**, cada serviço que a empresa executa: categoria (ex:
+  "Fundações"), nome, texto de escopo (o mesmo texto que vai para o PDF) e **custo base**.
+- Ao montar uma proposta, você **marca os itens de escopo** usados no projeto e informa a **quantidade**
+  de cada um (levantamento de quantitativos). O sistema calcula o custo total automaticamente.
+- Você informa o seu **markup** (%) e o sistema sugere o valor de venda (custo + markup). Esse valor
+  final pode ser ajustado manualmente antes de fechar a proposta.
+- Você monta as **condições de pagamento** (parcelas por % ou valor fixo) — os valores são calculados
+  sozinhos a partir do valor final.
+- Ao salvar, o sistema gera automaticamente o **PDF da proposta**, com cabeçalho e logo da ES³, escopo
+  organizado por categoria, caixa de investimento (com valor por extenso), condições de pagamento,
+  observações gerais, diferenciais da empresa e assinatura do responsável técnico.
+
+### 2. Catálogo de Escopo
+
+Cadastro reutilizável dos serviços/etapas construtivas da empresa (o "banco de dados" de escopo e preço
+base usado pelas propostas). Use `{{qtd}}` no texto do escopo onde quiser que a quantidade apareça
+automaticamente no PDF (ex: `"Execução de piso polido — {{qtd}}, equipe própria."` vira
+`"Execução de piso polido — 700 m², equipe própria."`).
+
+### 3. Orçamentos Rápidos
+
+Um segundo módulo mais simples, para orçamentos pequenos com lista de item × quantidade × preço (sem toda
+a estrutura de uma proposta completa). Útil para serviços avulsos.
+
+### 4. Clientes, Serviços e Minha Empresa
+
+Cadastros de apoio usados pelos dois módulos acima. Em **"Minha Empresa"** ficam os dados que aparecem em
+todo PDF: nome, CNPJ, endereço, slogan, texto "sobre a empresa", diferenciais, frase de rodapé, markup
+padrão, forma de pagamento padrão, numeração das propostas e responsável técnico padrão.
 
 ## Como rodar (passo a passo)
 
@@ -25,38 +55,50 @@ Você vai precisar do **Node.js** instalado no computador (baixe em https://node
    ```
 4. Abra o navegador em: **http://localhost:3000**
 
-Pronto — a tela do sistema vai abrir. Os dados ficam salvos em um arquivo (`data/es3.db`) na própria pasta do projeto, então eles continuam lá mesmo depois de fechar e abrir o sistema de novo.
+Os dados ficam salvos em um arquivo (`data/es3.db`) na própria pasta do projeto — continuam lá mesmo depois
+de fechar e abrir o sistema de novo.
 
 ## Primeiro uso
 
-1. Vá na aba **"Minha Empresa"** e preencha o nome, telefone, endereço etc. Isso aparece no cabeçalho de todo PDF gerado.
-2. Vá na aba **"Serviços"** e cadastre os serviços que você mais usa, com o preço padrão de cada um (você pode ajustar o preço na hora de montar um orçamento específico, se precisar).
-3. Vá na aba **"Clientes"** e cadastre o cliente para quem você vai fazer o orçamento (ou cadastre na hora, se preferir).
-4. Vá na aba **"Orçamentos" → "+ Novo Orçamento"**, escolha o cliente, adicione os itens (escolhendo do catálogo ou digitando um item avulso), ajuste desconto se quiser, e clique em **"Salvar Orçamento"**. O PDF abre automaticamente em uma nova aba do navegador.
+1. Vá na aba **"Minha Empresa"** e confira/ajuste os dados (já vêm pré-preenchidos com as informações da
+   ES³ Engenharia de Obras extraídas do seu modelo). Ajuste principalmente o **markup padrão** e o
+   **próximo número de proposta** (para continuar a numeração que você já usa).
+2. Vá na aba **"Catálogo de Escopo"** e cadastre os serviços/etapas que a empresa executa, com o texto de
+   escopo e o custo base de cada um. Você pode ir cadastrando aos poucos, conforme for montando propostas.
+3. Vá na aba **"Clientes"** e cadastre o cliente do projeto (ou cadastre na hora, se preferir).
+4. Vá na aba **"Propostas" → "+ Nova Proposta"**: preencha os dados gerais, marque os itens de escopo
+   usados no projeto com as quantidades, confira o valor calculado com o markup, ajuste as condições de
+   pagamento e as observações, e clique em **"Salvar e Gerar PDF"**. O PDF abre automaticamente.
 
 ## Estrutura do projeto (para referência futura)
 
 ```
 server/
-  index.js          -> ponto de entrada do servidor
-  db.js             -> banco de dados (SQLite) e suas tabelas
-  routes/           -> regras de cada recurso (clientes, serviços, orçamentos, empresa)
-  pdf/               -> geração do PDF do orçamento
+  index.js            -> ponto de entrada do servidor
+  db.js               -> banco de dados (SQLite) e suas tabelas
+  routes/             -> regras de cada recurso (propostas, catálogo, clientes, serviços, orçamentos, empresa)
+  pdf/                -> geração dos PDFs (proposta e orçamento rápido)
+  utils/              -> valor por extenso, formatação de moeda/data
+  assets/             -> logo e marca d'água da ES³ usados no PDF da proposta
 public/
-  index.html         -> telas do sistema
+  index.html          -> telas do sistema
   css/style.css       -> visual
   js/app.js           -> comportamento das telas (chama a API e calcula os totais)
 data/
   es3.db              -> banco de dados (criado automaticamente, não é versionado no Git)
 ```
 
-Essa estrutura foi pensada para crescer: cada novo módulo do sistema (ex: controle de obras, funcionários, materiais, financeiro) pode ganhar suas próprias rotas em `server/routes/`, suas tabelas em `server/db.js` e suas telas em `public/`, sem precisar mexer no que já existe.
+Essa estrutura foi pensada para crescer: cada novo módulo do sistema (ex: controle de obras, funcionários,
+materiais, financeiro) pode ganhar suas próprias rotas em `server/routes/`, suas tabelas em `server/db.js`
+e suas telas em `public/`, sem precisar mexer no que já existe.
 
 ## Próximos passos possíveis
 
 - Login/usuários (hoje o sistema é de uso único, sem senha).
-- Envio do orçamento por e-mail direto pelo sistema.
-- Status do orçamento (aprovado/reprovado) com acompanhamento.
-- Módulo de controle de obras, materiais e funcionários, reaproveitando clientes e serviços já cadastrados aqui.
+- Envio da proposta por e-mail/WhatsApp direto pelo sistema.
+- Histórico de revisões de uma mesma proposta (B, C...) com comparação de valores.
+- Upload de um logo próprio (hoje usa o logo/marca d'água extraídos do seu modelo em PDF).
+- Módulo de controle de obras, materiais e funcionários, reaproveitando clientes e escopo já cadastrados aqui.
 
-Se quiser evoluir para algo acessível pela internet (não só no seu computador), dá para hospedar esse mesmo projeto em serviços como Railway ou Render — é só avisar quando quiser fazer isso.
+Se quiser evoluir para algo acessível pela internet (não só no seu computador), dá para hospedar esse mesmo
+projeto em serviços como Railway ou Render — é só avisar quando quiser fazer isso.

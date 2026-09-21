@@ -1,13 +1,5 @@
 const PDFDocument = require('pdfkit');
-
-function formatarMoeda(valor) {
-  return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-}
-
-function formatarData(dataIso) {
-  const [ano, mes, dia] = dataIso.split('-');
-  return `${dia}/${mes}/${ano}`;
-}
+const { formatarMoeda, formatarData } = require('../utils/formatadores');
 
 function dataValidade(dataIso, validadeDias) {
   const data = new Date(`${dataIso}T00:00:00`);

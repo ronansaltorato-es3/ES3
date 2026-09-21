@@ -9,13 +9,24 @@ router.get('/', (req, res) => {
 });
 
 router.put('/', (req, res) => {
-  const { nome, documento, telefone, email, endereco, validade_padrao_dias, observacoes_padrao } = req.body;
+  const {
+    nome, documento, telefone, email, endereco, validade_padrao_dias, observacoes_padrao,
+    sobre_empresa, frase_rodape, diferenciais, motivos_escolha, markup_padrao,
+    responsavel_nome, responsavel_cargo, responsavel_registro, proximo_numero_proposta,
+    slogan, forma_pagamento,
+  } = req.body;
+
   if (!nome || !nome.trim()) {
     return res.status(400).json({ erro: 'Informe o nome da empresa.' });
   }
+
   db.prepare(
     `UPDATE empresa SET nome = ?, documento = ?, telefone = ?, email = ?, endereco = ?,
-     validade_padrao_dias = ?, observacoes_padrao = ? WHERE id = 1`
+     validade_padrao_dias = ?, observacoes_padrao = ?, sobre_empresa = ?, frase_rodape = ?,
+     diferenciais = ?, motivos_escolha = ?, markup_padrao = ?, responsavel_nome = ?,
+     responsavel_cargo = ?, responsavel_registro = ?, proximo_numero_proposta = ?,
+     slogan = ?, forma_pagamento = ?
+     WHERE id = 1`
   ).run(
     nome.trim(),
     documento || '',
@@ -23,7 +34,18 @@ router.put('/', (req, res) => {
     email || '',
     endereco || '',
     Number(validade_padrao_dias) || 15,
-    observacoes_padrao || ''
+    observacoes_padrao || '',
+    sobre_empresa || '',
+    frase_rodape || '',
+    diferenciais || '',
+    motivos_escolha || '',
+    Number(markup_padrao) || 0,
+    responsavel_nome || '',
+    responsavel_cargo || '',
+    responsavel_registro || '',
+    Number(proximo_numero_proposta) || 1,
+    slogan || '',
+    forma_pagamento || ''
   );
   res.json(db.prepare('SELECT * FROM empresa WHERE id = 1').get());
 });
