@@ -33,7 +33,8 @@ function carregarPropostaCompleta(id) {
 
   const itens = db
     .prepare('SELECT * FROM proposta_itens WHERE proposta_id = ? ORDER BY ordem, id')
-    .all(id);
+    .all(id)
+    .map((item) => ({ ...item, componentes: JSON.parse(item.componentes_json || '[]') }));
 
   return {
     ...proposta,
@@ -99,8 +100,8 @@ router.post('/', (req, res) => {
      ) VALUES (?, ?, ?, ?, date('now'), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'rascunho')`
   );
   const inserirItem = db.prepare(
-    `INSERT INTO proposta_itens (proposta_id, item_catalogo_id, categoria, descricao, unidade, quantidade, custo_unitario, ordem)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+    `INSERT INTO proposta_itens (proposta_id, item_catalogo_id, categoria, descricao, unidade, quantidade, custo_unitario, componentes_json, ordem)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
   );
 
   const transacao = db.transaction((body) => {
@@ -135,6 +136,7 @@ router.post('/', (req, res) => {
         item.unidade || 'verba',
         Number(item.quantidade),
         Number(item.custo_unitario) || 0,
+        JSON.stringify(item.componentes || []),
         indice
       );
     });
@@ -182,8 +184,8 @@ router.put('/:id', (req, res) => {
   );
   const limparItens = db.prepare('DELETE FROM proposta_itens WHERE proposta_id = ?');
   const inserirItem = db.prepare(
-    `INSERT INTO proposta_itens (proposta_id, item_catalogo_id, categoria, descricao, unidade, quantidade, custo_unitario, ordem)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+    `INSERT INTO proposta_itens (proposta_id, item_catalogo_id, categoria, descricao, unidade, quantidade, custo_unitario, componentes_json, ordem)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
   );
 
   const transacao = db.transaction((body) => {
@@ -220,6 +222,7 @@ router.put('/:id', (req, res) => {
         item.unidade || 'verba',
         Number(item.quantidade),
         Number(item.custo_unitario) || 0,
+        JSON.stringify(item.componentes || []),
         indice
       );
     });

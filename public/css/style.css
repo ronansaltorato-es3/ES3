@@ -186,6 +186,27 @@ input, select, textarea {
 }
 .escopo-quantidade:disabled { background: #f2f2f2; }
 
+.opcoes-modo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-weight: 400;
+  font-size: 14px;
+  margin-top: 4px;
+}
+.opcoes-modo label { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+
+#tabela-componentes-catalogo input { width: 100%; }
+
+.componente-linha-proposta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 4px 0 4px 24px;
+}
+.componente-linha-proposta label { font-size: 13px; color: #555; min-width: 220px; }
+.componente-linha-proposta input { width: 160px; }
+
 #lista-catalogo h3 {
   color: var(--azul);
   margin-top: 24px;

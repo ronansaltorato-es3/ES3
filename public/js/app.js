@@ -286,15 +286,18 @@ async function carregarCatalogo() {
     <h3>${grupo.categoria}</h3>
     <table class="tabela">
       <thead>
-        <tr><th>Nome</th><th>Descrição</th><th>Unid.</th><th>Custo base</th><th></th></tr>
+        <tr><th>Nome</th><th>Descrição</th><th>Precificação</th><th></th></tr>
       </thead>
       <tbody>
         ${grupo.itens.map((item) => `
           <tr>
             <td>${item.nome}</td>
             <td>${item.descricao_template}</td>
-            <td>${item.unidade}</td>
-            <td>${formatarMoeda(item.custo_base)}</td>
+            <td>${
+              item.modo_precificacao === 'composto'
+                ? item.componentes.map((c) => `${c.nome}: ${formatarMoeda(c.custo_unitario)}/${c.unidade}`).join('<br>')
+                : `${formatarMoeda(item.custo_base)} / ${item.unidade}`
+            }</td>
             <td>
               <button class="btn-link" onclick="editarCatalogo(${item.id})">Editar</button>
               <button class="btn-perigo" onclick="excluirCatalogo(${item.id})">Excluir</button>
@@ -306,6 +309,37 @@ async function carregarCatalogo() {
   `).join('');
 }
 
+function alternarModoCatalogo(modo) {
+  document.getElementById('catalogo-campos-simples').style.display = modo === 'composto' ? 'none' : 'flex';
+  document.getElementById('catalogo-campos-composto').style.display = modo === 'composto' ? 'block' : 'none';
+  document.getElementById('dica-placeholder-qtd').style.display = modo === 'composto' ? 'none' : 'block';
+}
+
+document.querySelectorAll('input[name="catalogo-modo"]').forEach((radio) => {
+  radio.addEventListener('change', (evento) => alternarModoCatalogo(evento.target.value));
+});
+
+function linhaComponenteCatalogoHtml(componente = {}) {
+  return `
+    <tr class="linha-componente-catalogo">
+      <td><input type="text" class="componente-nome" value="${componente.nome || ''}" required /></td>
+      <td><input type="text" class="componente-unidade" value="${componente.unidade || 'un'}" /></td>
+      <td><input type="number" class="componente-custo" min="0" step="0.01" value="${componente.custo_unitario ?? ''}" required /></td>
+      <td><button type="button" class="btn-perigo btn-remover-componente">✕</button></td>
+    </tr>
+  `;
+}
+
+function adicionarComponenteCatalogo(componente) {
+  const corpo = document.getElementById('componentes-catalogo');
+  corpo.insertAdjacentHTML('beforeend', linhaComponenteCatalogoHtml(componente));
+  corpo.lastElementChild.querySelector('.btn-remover-componente').addEventListener('click', (evento) => {
+    evento.target.closest('tr').remove();
+  });
+}
+
+document.getElementById('btn-add-componente-catalogo').addEventListener('click', () => adicionarComponenteCatalogo());
+
 window.editarCatalogo = (id) => {
   const item = estado.catalogo.find((i) => i.id === id);
   estado.editandoCatalogoId = id;
@@ -313,15 +347,28 @@ window.editarCatalogo = (id) => {
   document.getElementById('catalogo-categoria').value = item.categoria;
   document.getElementById('catalogo-ordem-categoria').value = item.ordem_categoria;
   document.getElementById('catalogo-nome').value = item.nome;
-  document.getElementById('catalogo-unidade').value = item.unidade;
-  document.getElementById('catalogo-custo').value = item.custo_base;
   document.getElementById('catalogo-descricao').value = item.descricao_template;
+
+  const modo = item.modo_precificacao === 'composto' ? 'composto' : 'simples';
+  document.querySelector(`input[name="catalogo-modo"][value="${modo}"]`).checked = true;
+  alternarModoCatalogo(modo);
+
+  document.getElementById('componentes-catalogo').innerHTML = '';
+  if (modo === 'composto') {
+    item.componentes.forEach((c) => adicionarComponenteCatalogo(c));
+  } else {
+    document.getElementById('catalogo-unidade').value = item.unidade;
+    document.getElementById('catalogo-custo').value = item.custo_base;
+  }
+
   document.getElementById('btn-cancelar-catalogo').style.display = 'inline-block';
 };
 
 document.getElementById('btn-cancelar-catalogo').addEventListener('click', () => {
   estado.editandoCatalogoId = null;
   document.getElementById('form-catalogo').reset();
+  document.getElementById('componentes-catalogo').innerHTML = '';
+  alternarModoCatalogo('simples');
   document.getElementById('btn-cancelar-catalogo').style.display = 'none';
 });
 
@@ -338,14 +385,28 @@ window.excluirCatalogo = async (id) => {
 
 document.getElementById('form-catalogo').addEventListener('submit', async (evento) => {
   evento.preventDefault();
-  const corpo = JSON.stringify({
+  const modo = document.querySelector('input[name="catalogo-modo"]:checked').value;
+
+  const payload = {
     categoria: document.getElementById('catalogo-categoria').value,
     ordem_categoria: document.getElementById('catalogo-ordem-categoria').value,
     nome: document.getElementById('catalogo-nome').value,
-    unidade: document.getElementById('catalogo-unidade').value,
-    custo_base: document.getElementById('catalogo-custo').value,
     descricao_template: document.getElementById('catalogo-descricao').value,
-  });
+    modo_precificacao: modo,
+  };
+
+  if (modo === 'composto') {
+    payload.componentes = Array.from(document.querySelectorAll('#componentes-catalogo .linha-componente-catalogo')).map((linha) => ({
+      nome: linha.querySelector('.componente-nome').value,
+      unidade: linha.querySelector('.componente-unidade').value,
+      custo_unitario: linha.querySelector('.componente-custo').value,
+    }));
+  } else {
+    payload.unidade = document.getElementById('catalogo-unidade').value;
+    payload.custo_base = document.getElementById('catalogo-custo').value;
+  }
+
+  const corpo = JSON.stringify(payload);
   try {
     if (estado.editandoCatalogoId) {
       await chamarApi(`/api/itens-catalogo/${estado.editandoCatalogoId}`, { method: 'PUT', body: corpo });
@@ -356,6 +417,8 @@ document.getElementById('form-catalogo').addEventListener('submit', async (event
     }
     estado.editandoCatalogoId = null;
     document.getElementById('form-catalogo').reset();
+    document.getElementById('componentes-catalogo').innerHTML = '';
+    alternarModoCatalogo('simples');
     document.getElementById('btn-cancelar-catalogo').style.display = 'none';
     await carregarCatalogo();
   } catch (erro) {
@@ -600,20 +663,45 @@ function renderizarEscopoCatalogo(itensSelecionados = []) {
       <h4>${grupo.categoria}</h4>
       ${grupo.itens.map((item) => {
         const selecionado = selecaoPorId.get(item.id);
+        const composto = item.modo_precificacao === 'composto';
         return `
           <div class="escopo-item">
             <label class="escopo-item-check">
               <input type="checkbox" class="escopo-checkbox" data-id="${item.id}" ${selecionado ? 'checked' : ''} />
               <strong>${item.nome}</strong>
-              <span class="escopo-item-custo">${formatarMoeda(item.custo_base)} / ${item.unidade}</span>
+              <span class="escopo-item-custo">${
+                composto
+                  ? item.componentes.map((c) => `${c.nome}: ${formatarMoeda(c.custo_unitario)}/${c.unidade}`).join(' · ')
+                  : `${formatarMoeda(item.custo_base)} / ${item.unidade}`
+              }</span>
             </label>
             <p class="escopo-item-descricao">${item.descricao_template}</p>
-            <input
-              type="number" class="escopo-quantidade" data-id="${item.id}" min="0.01" step="0.01"
-              placeholder="Quantidade em ${item.unidade}"
-              value="${selecionado ? selecionado.quantidade : ''}"
-              ${selecionado ? '' : 'disabled'}
-            />
+            ${
+              composto
+                ? item.componentes.map((c, indice) => {
+                    const qtdSalva = selecionado && selecionado.componentes && selecionado.componentes[indice]
+                      ? selecionado.componentes[indice].quantidade
+                      : '';
+                    return `
+                      <div class="componente-linha-proposta">
+                        <label>${c.nome} (${c.unidade})</label>
+                        <input
+                          type="number" class="escopo-componente-quantidade" data-id="${item.id}" data-indice="${indice}"
+                          min="0" step="0.01" value="${qtdSalva}" placeholder="Quantidade em ${c.unidade}"
+                          ${selecionado ? '' : 'disabled'}
+                        />
+                      </div>
+                    `;
+                  }).join('')
+                : `
+                  <input
+                    type="number" class="escopo-quantidade" data-id="${item.id}" min="0.01" step="0.01"
+                    placeholder="Quantidade em ${item.unidade}"
+                    value="${selecionado ? selecionado.quantidade : ''}"
+                    ${selecionado ? '' : 'disabled'}
+                  />
+                `
+            }
           </div>
         `;
       }).join('')}
@@ -622,13 +710,17 @@ function renderizarEscopoCatalogo(itensSelecionados = []) {
 
   container.querySelectorAll('.escopo-checkbox').forEach((checkbox) => {
     checkbox.addEventListener('change', () => {
-      const input = container.querySelector(`.escopo-quantidade[data-id="${checkbox.dataset.id}"]`);
-      input.disabled = !checkbox.checked;
-      if (checkbox.checked && !input.value) input.value = 1;
+      const inputs = container.querySelectorAll(
+        `.escopo-quantidade[data-id="${checkbox.dataset.id}"], .escopo-componente-quantidade[data-id="${checkbox.dataset.id}"]`
+      );
+      inputs.forEach((input) => {
+        input.disabled = !checkbox.checked;
+        if (checkbox.checked && !input.value && input.classList.contains('escopo-quantidade')) input.value = 1;
+      });
       recalcularFinanceiroProposta();
     });
   });
-  container.querySelectorAll('.escopo-quantidade').forEach((input) => {
+  container.querySelectorAll('.escopo-quantidade, .escopo-componente-quantidade').forEach((input) => {
     input.addEventListener('input', recalcularFinanceiroProposta);
   });
 }
@@ -639,9 +731,36 @@ function itensEscopoSelecionados() {
   container.querySelectorAll('.escopo-checkbox:checked').forEach((checkbox) => {
     const id = Number(checkbox.dataset.id);
     const item = estado.catalogo.find((i) => i.id === id);
+    if (!item) return;
+
+    if (item.modo_precificacao === 'composto') {
+      const componentesPreenchidos = item.componentes.map((c, indice) => {
+        const input = container.querySelector(`.escopo-componente-quantidade[data-id="${id}"][data-indice="${indice}"]`);
+        const quantidade = Number(input.value) || 0;
+        return { nome: c.nome, unidade: c.unidade, custo_unitario: c.custo_unitario, quantidade };
+      });
+      const custoTotalItem = componentesPreenchidos.reduce((soma, c) => soma + c.quantidade * c.custo_unitario, 0);
+      if (custoTotalItem <= 0) return;
+      const detalhamento = componentesPreenchidos
+        .filter((c) => c.quantidade > 0)
+        .map((c) => `${c.nome}: ${c.quantidade.toLocaleString('pt-BR')} ${c.unidade}`)
+        .join(' · ');
+      const descricao = `${item.descricao_template} (${detalhamento})`;
+      itens.push({
+        item_catalogo_id: item.id,
+        categoria: item.categoria,
+        descricao,
+        unidade: 'verba',
+        quantidade: 1,
+        custo_unitario: custoTotalItem,
+        componentes: componentesPreenchidos,
+      });
+      return;
+    }
+
     const quantidadeInput = container.querySelector(`.escopo-quantidade[data-id="${id}"]`);
     const quantidade = Number(quantidadeInput.value) || 0;
-    if (!item || quantidade <= 0) return;
+    if (quantidade <= 0) return;
     const descricao = item.descricao_template.includes('{{qtd}}')
       ? item.descricao_template.replace('{{qtd}}', `${quantidade.toLocaleString('pt-BR')} ${item.unidade}`)
       : item.descricao_template;
@@ -652,6 +771,7 @@ function itensEscopoSelecionados() {
       unidade: item.unidade,
       quantidade,
       custo_unitario: item.custo_base,
+      componentes: [],
     });
   });
   return itens;

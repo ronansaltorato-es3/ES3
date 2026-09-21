@@ -70,10 +70,20 @@ db.exec(`
     ordem_item INTEGER NOT NULL DEFAULT 0,
     nome TEXT NOT NULL,
     descricao_template TEXT NOT NULL DEFAULT '',
+    modo_precificacao TEXT NOT NULL DEFAULT 'simples',
     unidade TEXT NOT NULL DEFAULT 'verba',
     custo_base REAL NOT NULL DEFAULT 0,
     ativo INTEGER NOT NULL DEFAULT 1,
     criado_em TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+
+  CREATE TABLE IF NOT EXISTS itens_catalogo_componentes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    item_catalogo_id INTEGER NOT NULL REFERENCES itens_catalogo(id) ON DELETE CASCADE,
+    nome TEXT NOT NULL,
+    unidade TEXT NOT NULL DEFAULT 'un',
+    custo_unitario REAL NOT NULL DEFAULT 0,
+    ordem INTEGER NOT NULL DEFAULT 0
   );
 
   CREATE TABLE IF NOT EXISTS propostas (
@@ -112,9 +122,20 @@ db.exec(`
     unidade TEXT NOT NULL DEFAULT 'verba',
     quantidade REAL NOT NULL DEFAULT 1,
     custo_unitario REAL NOT NULL DEFAULT 0,
+    componentes_json TEXT NOT NULL DEFAULT '[]',
     ordem INTEGER NOT NULL DEFAULT 0
   );
 `);
+
+// Migração leve: garante as colunas novas em bancos já existentes.
+const colunasCatalogo = db.prepare("PRAGMA table_info(itens_catalogo)").all().map((c) => c.name);
+if (!colunasCatalogo.includes('modo_precificacao')) {
+  db.exec("ALTER TABLE itens_catalogo ADD COLUMN modo_precificacao TEXT NOT NULL DEFAULT 'simples'");
+}
+const colunasPropostaItens = db.prepare("PRAGMA table_info(proposta_itens)").all().map((c) => c.name);
+if (!colunasPropostaItens.includes('componentes_json')) {
+  db.exec("ALTER TABLE proposta_itens ADD COLUMN componentes_json TEXT NOT NULL DEFAULT '[]'");
+}
 
 // Migração leve: garante as colunas novas de "empresa" mesmo em bancos já existentes.
 const colunasEmpresa = db.prepare("PRAGMA table_info(empresa)").all().map((c) => c.name);

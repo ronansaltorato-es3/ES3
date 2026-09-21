@@ -189,9 +189,7 @@
       <div class="cabecalho-secao">
         <h2>Catálogo de Escopo</h2>
         <p class="dica">
-          Cadastre uma vez cada serviço que sua empresa executa. O texto de descrição vai direto para o PDF da
-          proposta — use <code>{{qtd}}</code> no texto onde quiser que a quantidade apareça
-          (ex: "Execução de piso polido — {{qtd}}, equipe própria.").
+          Cadastre uma vez cada serviço que sua empresa executa, com o texto de escopo que vai direto para o PDF.
         </p>
       </div>
       <form id="form-catalogo" class="form-coluna">
@@ -211,18 +209,45 @@
             <label for="catalogo-nome">Nome curto do serviço</label>
             <input type="text" id="catalogo-nome" required />
           </div>
+        </div>
+
+        <div class="campo">
+          <label>Como esse serviço é precificado?</label>
+          <div class="opcoes-modo">
+            <label><input type="radio" name="catalogo-modo" value="simples" checked /> Quantidade única (ex: R$/m², R$/un, valor fechado)</label>
+            <label><input type="radio" name="catalogo-modo" value="composto" /> Vários quantitativos somados (ex: forma + aço + concreto)</label>
+          </div>
+        </div>
+
+        <div class="linha-form" id="catalogo-campos-simples">
           <div class="campo campo-pequeno">
             <label for="catalogo-unidade">Unidade</label>
             <input type="text" id="catalogo-unidade" placeholder="m², un, verba..." value="verba" />
           </div>
           <div class="campo campo-pequeno">
             <label for="catalogo-custo">Custo base (R$)</label>
-            <input type="number" id="catalogo-custo" min="0" step="0.01" required />
+            <input type="number" id="catalogo-custo" min="0" step="0.01" />
           </div>
         </div>
+
+        <div id="catalogo-campos-composto" style="display:none">
+          <p class="dica">Cada quantitativo tem sua própria unidade e custo. O custo do serviço é a soma de todos.</p>
+          <table class="tabela" id="tabela-componentes-catalogo">
+            <thead>
+              <tr><th style="width:45%">Nome do quantitativo</th><th>Unidade</th><th>Custo unitário (R$)</th><th></th></tr>
+            </thead>
+            <tbody id="componentes-catalogo"></tbody>
+          </table>
+          <button type="button" id="btn-add-componente-catalogo" class="btn-secundario">+ Adicionar quantitativo</button>
+        </div>
+
         <div class="campo">
           <label for="catalogo-descricao">Texto do escopo (vai para o PDF)</label>
           <textarea id="catalogo-descricao" rows="2" required></textarea>
+          <p class="dica" id="dica-placeholder-qtd">
+            Use <code>{{qtd}}</code> no texto onde quiser que a quantidade apareça
+            (ex: "Execução de piso polido — {{qtd}}, equipe própria.").
+          </p>
         </div>
         <div class="acoes-form">
           <button type="submit" class="btn-primario">Salvar Item</button>
