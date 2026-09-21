@@ -191,4 +191,62 @@ if (!empresaExiste) {
   );
 }
 
+// Catálogo inicial de escopo, com base no modelo de proposta da ES³.
+// Os custos vêm zerados de propósito — ajuste-os na aba "Catálogo de Escopo"
+// com os valores reais antes de usar em uma proposta de verdade.
+const catalogoExiste = db.prepare('SELECT id FROM itens_catalogo LIMIT 1').get();
+if (!catalogoExiste) {
+  const inserirItem = db.prepare(
+    `INSERT INTO itens_catalogo (categoria, ordem_categoria, ordem_item, nome, descricao_template, modo_precificacao, unidade, custo_base)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+  );
+  const inserirComponente = db.prepare(
+    `INSERT INTO itens_catalogo_componentes (item_catalogo_id, nome, unidade, custo_unitario, ordem)
+     VALUES (?, ?, ?, ?, ?)`
+  );
+
+  function inserirItemComposto(categoria, ordemCategoria, ordemItem, nome, descricao, componentes) {
+    const info = inserirItem.run(categoria, ordemCategoria, ordemItem, nome, descricao, 'composto', 'composto', 0);
+    componentes.forEach(([nomeComponente, unidade], indice) =>
+      inserirComponente.run(info.lastInsertRowid, nomeComponente, unidade, 0, indice)
+    );
+  }
+
+  // 1. Serviços Preliminares — itens avulsos para marcar só o que a obra realmente tem.
+  [
+    ['Locação da obra e gabarito', 'Locação da obra e gabarito conforme projeto arquitetônico e estrutural.', 'verba'],
+    ['Canteiro de obras (NR-18)', "Implantação do canteiro de obras conforme NR-18: área de convivência, banheiros e área de armazenamento de materiais.", 'verba'],
+    ['Limpeza do terreno', 'Limpeza e desmatamento do terreno para início da obra.', 'm²'],
+    ['Tapume / cerca da obra', 'Execução de tapume/cerca de vedação do canteiro de obras conforme exigência municipal.', 'm'],
+    ['Placa de obra', 'Fornecimento e instalação de placa de obra conforme exigência do CREA/prefeitura.', 'un'],
+    ['Ligações provisórias (água e luz)', 'Execução das ligações provisórias de água e energia elétrica para o canteiro de obras.', 'verba'],
+  ].forEach(([nome, descricao, unidade], indice) => {
+    inserirItem.run('Serviços Preliminares', 1, indice, nome, descricao, 'simples', unidade, 0);
+  });
+
+  // 2. Fundações — duas formas de precificar; use a que fizer sentido em cada proposta.
+  inserirItem.run(
+    'Fundações', 2, 0, 'Fundações (por m² de obra)',
+    'Execução de fundações (estacas, blocos de coroamento e vigas baldrame) conforme projeto estrutural.',
+    'simples', 'm²', 0
+  );
+  inserirItemComposto(
+    'Fundações', 2, 1, 'Fundações (por quantitativo)',
+    'Execução de fundações em concreto armado conforme projeto estrutural.',
+    [['Área de forma', 'm²'], ['Aço', 'kg'], ['Concreto', 'm³']]
+  );
+
+  // 3. Estrutura — mesma lógica de Fundações.
+  inserirItem.run(
+    'Estrutura', 3, 0, 'Estrutura (por m² de obra)',
+    'Execução de estrutura em concreto armado (pilares, vigas e lajes) conforme projeto estrutural.',
+    'simples', 'm²', 0
+  );
+  inserirItemComposto(
+    'Estrutura', 3, 1, 'Estrutura (por quantitativo)',
+    'Execução de estrutura em concreto armado (pilares, vigas e lajes) conforme projeto estrutural.',
+    [['Área de forma', 'm²'], ['Aço', 'kg'], ['Concreto', 'm³']]
+  );
+}
+
 module.exports = db;
