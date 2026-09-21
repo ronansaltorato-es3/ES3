@@ -186,6 +186,35 @@ input, select, textarea {
 }
 .escopo-quantidade:disabled { background: #f2f2f2; }
 
+.chat-mensagens {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  padding: 16px;
+  height: 440px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.bolha {
+  max-width: 75%;
+  padding: 10px 14px;
+  border-radius: 14px;
+  font-size: 14px;
+  line-height: 1.45;
+  white-space: pre-wrap;
+}
+.bolha-usuario { align-self: flex-end; background: var(--azul); color: white; border-bottom-right-radius: 3px; }
+.bolha-assistente { align-self: flex-start; background: #eef0f5; color: var(--texto); border-bottom-left-radius: 3px; }
+.bolha-erro { align-self: flex-start; background: #fbe0dd; color: var(--vermelho); border-bottom-left-radius: 3px; }
+.bolha.digitando { opacity: 0.6; font-style: italic; }
+
+.chat-form { display: flex; gap: 8px; margin-bottom: 16px; }
+.chat-form input { flex: 1; padding: 10px 12px; }
+
 .opcoes-modo {
   display: flex;
   flex-direction: column;

@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 const path = require('path');
 const express = require('express');
 
@@ -9,6 +11,7 @@ const servicosRoutes = require('./routes/servicos');
 const orcamentosRoutes = require('./routes/orcamentos');
 const itensCatalogoRoutes = require('./routes/itensCatalogo');
 const propostasRoutes = require('./routes/propostas');
+const assistenteRoutes = require('./routes/assistente');
 
 const app = express();
 const PORTA = process.env.PORT || 3000;
@@ -22,6 +25,7 @@ app.use('/api/servicos', servicosRoutes);
 app.use('/api/orcamentos', orcamentosRoutes);
 app.use('/api/itens-catalogo', itensCatalogoRoutes);
 app.use('/api/propostas', propostasRoutes);
+app.use('/api/assistente', assistenteRoutes);
 
 app.use((err, req, res, next) => {
   console.error(err);

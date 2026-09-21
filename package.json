@@ -19,7 +19,9 @@
   },
   "homepage": "https://github.com/ronansaltorato-es3/ES3#readme",
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.127.0",
     "better-sqlite3": "^13.0.3",
+    "dotenv": "^18.0.1",
     "express": "^5.2.1",
     "pdfkit": "^0.20.2"
   }

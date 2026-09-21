@@ -7,6 +7,7 @@ const estado = {
   editandoOrcamentoId: null,
   editandoCatalogoId: null,
   editandoPropostaId: null,
+  assistente: { mensagens: [], rascunho: null },
 };
 
 // ---------- Utilidades ----------
@@ -967,6 +968,141 @@ document.getElementById('form-proposta').addEventListener('submit', async (event
     mostrarToast(erro.message, true);
   }
 });
+
+// ---------- Assistente IA ----------
+
+function rascunhoVazioIA() {
+  return {
+    dados_gerais: {},
+    itens: [],
+    markup_percentual: null,
+    condicoes_pagamento: [],
+    observacoes_gerais: [],
+  };
+}
+
+function adicionarBolha(tipo, texto) {
+  const container = document.getElementById('chat-mensagens');
+  const div = document.createElement('div');
+  div.className = `bolha bolha-${tipo}`;
+  div.textContent = texto;
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+  return div;
+}
+
+function mostrarDigitando() {
+  const div = adicionarBolha('assistente', 'digitando...');
+  div.classList.add('digitando');
+  return div;
+}
+
+document.getElementById('btn-assistente-ia').addEventListener('click', () => {
+  estado.assistente = { mensagens: [], rascunho: rascunhoVazioIA() };
+  document.getElementById('chat-mensagens').innerHTML = '';
+  document.getElementById('acoes-assistente').style.display = 'none';
+  document.getElementById('chat-input').value = '';
+  mostrarAba('assistente');
+  enviarMensagemAssistente(
+    'Olá! Quero montar uma proposta nova. Pode ir me perguntando o que precisar.'
+  );
+});
+
+document.getElementById('btn-voltar-assistente').addEventListener('click', () => {
+  mostrarAba('propostas');
+});
+
+async function enviarMensagemAssistente(textoUsuario) {
+  adicionarBolha('usuario', textoUsuario);
+  estado.assistente.mensagens.push({ role: 'user', content: textoUsuario });
+  const bolhaDigitando = mostrarDigitando();
+
+  try {
+    const resposta = await chamarApi('/api/assistente/mensagem', {
+      method: 'POST',
+      body: JSON.stringify({
+        mensagens: estado.assistente.mensagens,
+        rascunho: estado.assistente.rascunho,
+      }),
+    });
+    bolhaDigitando.remove();
+    estado.assistente.mensagens = resposta.mensagens;
+    estado.assistente.rascunho = resposta.rascunho;
+    adicionarBolha('assistente', resposta.mensagem_assistente || '(sem resposta de texto desta vez — continue a conversa)');
+    if (resposta.finalizado) {
+      document.getElementById('acoes-assistente').style.display = 'block';
+    }
+  } catch (erro) {
+    bolhaDigitando.remove();
+    adicionarBolha('erro', erro.message);
+  }
+}
+
+document.getElementById('form-chat-assistente').addEventListener('submit', (evento) => {
+  evento.preventDefault();
+  const input = document.getElementById('chat-input');
+  const texto = input.value.trim();
+  if (!texto) return;
+  input.value = '';
+  enviarMensagemAssistente(texto);
+});
+
+document.getElementById('btn-revisar-proposta-ia').addEventListener('click', async () => {
+  try {
+    await aplicarRascunhoIaNoFormulario(estado.assistente.rascunho);
+    mostrarAba('form-proposta');
+  } catch (erro) {
+    mostrarToast(erro.message, true);
+  }
+});
+
+async function aplicarRascunhoIaNoFormulario(rascunho) {
+  estado.editandoPropostaId = null;
+  document.getElementById('titulo-form-proposta').textContent = 'Nova Proposta (via Assistente IA) — revise antes de salvar';
+  document.getElementById('form-proposta').reset();
+
+  const nomeCliente = (rascunho.dados_gerais.cliente_nome || '').trim();
+  if (nomeCliente) {
+    let cliente = estado.clientes.find((c) => c.nome.toLowerCase() === nomeCliente.toLowerCase());
+    if (!cliente) {
+      cliente = await chamarApi('/api/clientes', { method: 'POST', body: JSON.stringify({ nome: nomeCliente }) });
+      await carregarClientes();
+    }
+    document.getElementById('proposta-cliente').value = cliente.id;
+  }
+
+  document.getElementById('proposta-titulo').value = rascunho.dados_gerais.titulo || '';
+  document.getElementById('proposta-subtitulo').value = rascunho.dados_gerais.subtitulo || '';
+  document.getElementById('proposta-projeto').value = rascunho.dados_gerais.projeto || '';
+  document.getElementById('proposta-local').value = rascunho.dados_gerais.local || '';
+  document.getElementById('proposta-prazo').value = rascunho.dados_gerais.prazo || '';
+  document.getElementById('proposta-validade').value = rascunho.dados_gerais.validade_dias || estado.empresa?.validade_padrao_dias || 15;
+  document.getElementById('proposta-markup').value = rascunho.markup_percentual ?? estado.empresa?.markup_padrao ?? 0;
+  document.getElementById('proposta-valor-final').value = '';
+  document.getElementById('proposta-valor-final').dataset.ultimoAuto = '';
+  document.getElementById('proposta-observacao-investimento').value =
+    'Valor referente exclusivamente à mão de obra. Serviços faturados com emissão de Nota Fiscal.';
+  document.getElementById('proposta-forma-pagamento').value = estado.empresa?.forma_pagamento || '';
+  document.getElementById('proposta-observacoes-gerais').value =
+    (rascunho.observacoes_gerais.length ? rascunho.observacoes_gerais : OBSERVACOES_PADRAO_PROPOSTA.split('\n')).join('\n');
+  document.getElementById('proposta-responsavel-nome').value = estado.empresa?.responsavel_nome || '';
+  document.getElementById('proposta-responsavel-cargo').value = estado.empresa?.responsavel_cargo || '';
+  document.getElementById('proposta-responsavel-registro').value = estado.empresa?.responsavel_registro || '';
+  document.getElementById('proposta-status').value = 'rascunho';
+
+  document.getElementById('pagamentos-proposta').innerHTML = '';
+  const parcelas = rascunho.condicoes_pagamento.length
+    ? rascunho.condicoes_pagamento
+    : [
+        { descricao: '10% na assinatura do contrato', percentual: 10 },
+        { descricao: '80% em medições mensais proporcionais ao avanço físico da obra', percentual: 80 },
+        { descricao: '10% na entrega final mediante vistoria de conclusão', percentual: 10 },
+      ];
+  parcelas.forEach((p) => adicionarLinhaPagamento(p));
+
+  renderizarEscopoCatalogo(rascunho.itens);
+  recalcularFinanceiroProposta();
+}
 
 // ---------- Inicialização ----------
 

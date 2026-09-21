@@ -25,7 +25,10 @@
     <section id="aba-propostas" class="aba">
       <div class="cabecalho-secao">
         <h2>Propostas de Serviço</h2>
-        <button id="btn-nova-proposta" class="btn-primario">+ Nova Proposta</button>
+        <div>
+          <button id="btn-assistente-ia" class="btn-primario">✨ Montar com Assistente IA</button>
+          <button id="btn-nova-proposta" class="btn-secundario">+ Nova Proposta (manual)</button>
+        </div>
       </div>
       <table class="tabela">
         <thead>
@@ -41,6 +44,26 @@
         </thead>
         <tbody id="lista-propostas"></tbody>
       </table>
+    </section>
+
+    <!-- ASSISTENTE IA -->
+    <section id="aba-assistente" class="aba" style="display:none">
+      <div class="cabecalho-secao">
+        <h2>Assistente IA — Montar Proposta</h2>
+        <button id="btn-voltar-assistente" class="btn-secundario">&larr; Voltar</button>
+      </div>
+      <p class="dica">
+        Converse normalmente — a IA vai perguntando sobre a obra e marcando os serviços e quantidades sozinha.
+        No final, você revisa tudo na tela de proposta antes de gerar o PDF.
+      </p>
+      <div id="chat-mensagens" class="chat-mensagens"></div>
+      <form id="form-chat-assistente" class="chat-form">
+        <input type="text" id="chat-input" placeholder="Digite sua resposta..." autocomplete="off" />
+        <button type="submit" class="btn-primario">Enviar</button>
+      </form>
+      <div class="acoes-form" id="acoes-assistente" style="display:none">
+        <button type="button" id="btn-revisar-proposta-ia" class="btn-primario">Revisar proposta montada →</button>
+      </div>
     </section>
 
     <!-- FORMULÁRIO DE PROPOSTA -->
