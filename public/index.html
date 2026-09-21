@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ES3 - Orçamentos</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <header class="topo">
+    <h1>ES3 <span>· Módulo de Orçamento</span></h1>
+    <nav class="abas">
+      <button class="aba-btn ativo" data-aba="orcamentos">Orçamentos</button>
+      <button class="aba-btn" data-aba="clientes">Clientes</button>
+      <button class="aba-btn" data-aba="servicos">Serviços</button>
+      <button class="aba-btn" data-aba="empresa">Minha Empresa</button>
+    </nav>
+  </header>
+
+  <main class="conteudo">
+
+    <!-- ORÇAMENTOS -->
+    <section id="aba-orcamentos" class="aba">
+      <div class="cabecalho-secao">
+        <h2>Orçamentos</h2>
+        <button id="btn-novo-orcamento" class="btn-primario">+ Novo Orçamento</button>
+      </div>
+      <table class="tabela">
+        <thead>
+          <tr>
+            <th>Número</th>
+            <th>Cliente</th>
+            <th>Data</th>
+            <th>Total</th>
+            <th>Status</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="lista-orcamentos"></tbody>
+      </table>
+    </section>
+
+    <!-- FORMULÁRIO DE ORÇAMENTO -->
+    <section id="aba-form-orcamento" class="aba" style="display:none">
+      <div class="cabecalho-secao">
+        <h2 id="titulo-form-orcamento">Novo Orçamento</h2>
+        <button id="btn-voltar-orcamentos" class="btn-secundario">&larr; Voltar</button>
+      </div>
+
+      <form id="form-orcamento">
+        <input type="hidden" id="orcamento-id" />
+        <div class="linha-form">
+          <div class="campo">
+            <label for="orcamento-cliente">Cliente</label>
+            <select id="orcamento-cliente" required></select>
+          </div>
+          <div class="campo campo-pequeno">
+            <label for="orcamento-validade">Validade (dias)</label>
+            <input type="number" id="orcamento-validade" min="1" value="15" />
+          </div>
+          <div class="campo campo-pequeno">
+            <label for="orcamento-desconto">Desconto (%)</label>
+            <input type="number" id="orcamento-desconto" min="0" max="100" step="0.01" value="0" />
+          </div>
+        </div>
+
+        <h3>Itens do orçamento</h3>
+        <table class="tabela" id="tabela-itens">
+          <thead>
+            <tr>
+              <th style="width:30%">Serviço do catálogo</th>
+              <th style="width:25%">Descrição</th>
+              <th>Unid.</th>
+              <th>Qtd.</th>
+              <th>Preço Unit. (R$)</th>
+              <th>Subtotal</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="itens-orcamento"></tbody>
+        </table>
+        <button type="button" id="btn-add-item" class="btn-secundario">+ Adicionar item</button>
+
+        <div class="totais">
+          <div><span>Subtotal:</span> <strong id="total-subtotal">R$ 0,00</strong></div>
+          <div><span>Desconto:</span> <strong id="total-desconto">R$ 0,00</strong></div>
+          <div class="total-final"><span>Total:</span> <strong id="total-geral">R$ 0,00</strong></div>
+        </div>
+
+        <div class="campo">
+          <label for="orcamento-observacoes">Observações</label>
+          <textarea id="orcamento-observacoes" rows="3"></textarea>
+        </div>
+
+        <div class="acoes-form">
+          <button type="submit" class="btn-primario">Salvar Orçamento</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- CLIENTES -->
+    <section id="aba-clientes" class="aba" style="display:none">
+      <div class="cabecalho-secao">
+        <h2>Clientes</h2>
+      </div>
+      <form id="form-cliente" class="form-inline">
+        <input type="hidden" id="cliente-id" />
+        <input type="text" id="cliente-nome" placeholder="Nome *" required />
+        <input type="text" id="cliente-telefone" placeholder="Telefone" />
+        <input type="email" id="cliente-email" placeholder="E-mail" />
+        <input type="text" id="cliente-endereco" placeholder="Endereço" />
+        <input type="text" id="cliente-cidade" placeholder="Cidade" />
+        <button type="submit" class="btn-primario">Salvar</button>
+        <button type="button" id="btn-cancelar-cliente" class="btn-secundario" style="display:none">Cancelar</button>
+      </form>
+      <table class="tabela">
+        <thead>
+          <tr><th>Nome</th><th>Telefone</th><th>E-mail</th><th>Cidade</th><th></th></tr>
+        </thead>
+        <tbody id="lista-clientes"></tbody>
+      </table>
+    </section>
+
+    <!-- SERVIÇOS -->
+    <section id="aba-servicos" class="aba" style="display:none">
+      <div class="cabecalho-secao">
+        <h2>Catálogo de Serviços</h2>
+      </div>
+      <form id="form-servico" class="form-inline">
+        <input type="hidden" id="servico-id" />
+        <input type="text" id="servico-nome" placeholder="Nome do serviço *" required />
+        <input type="text" id="servico-unidade" placeholder="Unidade (m², hora, unid...)" value="unid" />
+        <input type="number" id="servico-preco" placeholder="Preço unitário (R$) *" min="0" step="0.01" required />
+        <input type="text" id="servico-categoria" placeholder="Categoria" />
+        <button type="submit" class="btn-primario">Salvar</button>
+        <button type="button" id="btn-cancelar-servico" class="btn-secundario" style="display:none">Cancelar</button>
+      </form>
+      <table class="tabela">
+        <thead>
+          <tr><th>Nome</th><th>Unidade</th><th>Preço</th><th>Categoria</th><th></th></tr>
+        </thead>
+        <tbody id="lista-servicos"></tbody>
+      </table>
+    </section>
+
+    <!-- EMPRESA -->
+    <section id="aba-empresa" class="aba" style="display:none">
+      <div class="cabecalho-secao">
+        <h2>Dados da Minha Empresa</h2>
+        <p class="dica">Essas informações aparecem no cabeçalho de todos os PDFs de orçamento.</p>
+      </div>
+      <form id="form-empresa" class="form-coluna">
+        <div class="campo">
+          <label for="empresa-nome">Nome da empresa *</label>
+          <input type="text" id="empresa-nome" required />
+        </div>
+        <div class="campo">
+          <label for="empresa-documento">CNPJ/CPF</label>
+          <input type="text" id="empresa-documento" />
+        </div>
+        <div class="campo">
+          <label for="empresa-telefone">Telefone</label>
+          <input type="text" id="empresa-telefone" />
+        </div>
+        <div class="campo">
+          <label for="empresa-email">E-mail</label>
+          <input type="email" id="empresa-email" />
+        </div>
+        <div class="campo">
+          <label for="empresa-endereco">Endereço</label>
+          <input type="text" id="empresa-endereco" />
+        </div>
+        <div class="campo">
+          <label for="empresa-validade">Validade padrão dos orçamentos (dias)</label>
+          <input type="number" id="empresa-validade" min="1" />
+        </div>
+        <div class="campo">
+          <label for="empresa-observacoes">Observações padrão (aparecem em todo orçamento novo)</label>
+          <textarea id="empresa-observacoes" rows="3"></textarea>
+        </div>
+        <button type="submit" class="btn-primario">Salvar Dados</button>
+      </form>
+    </section>
+
+  </main>
+
+  <div id="toast" class="toast"></div>
+
+  <script src="js/app.js"></script>
+</body>
+</html>

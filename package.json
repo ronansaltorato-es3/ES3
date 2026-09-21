@@ -1,0 +1,26 @@
+{
+  "name": "es3",
+  "version": "1.0.0",
+  "description": "Sistema de gestão de obras - módulo de orçamento automático",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ronansaltorato-es3/ES3.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ronansaltorato-es3/ES3/issues"
+  },
+  "homepage": "https://github.com/ronansaltorato-es3/ES3#readme",
+  "dependencies": {
+    "better-sqlite3": "^13.0.3",
+    "express": "^5.2.1",
+    "pdfkit": "^0.20.2"
+  }
+}
